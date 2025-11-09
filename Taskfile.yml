@@ -1,0 +1,47 @@
+version: '3'
+
+tasks:
+  build:
+    desc: Build both zip and unzip commands
+    deps: [build-zip, build-unzip]
+
+  build-zip:
+    desc: Build zip command
+    cmds:
+      - go build -o bin/zip.exe ./cmd/zip
+
+  build-unzip:
+    desc: Build unzip command
+    cmds:
+      - go build -o bin/unzip.exe ./cmd/unzip
+
+  install:
+    desc: Install both zip and unzip commands
+    deps: [install-zip, install-unzip]
+
+  install-zip:
+    desc: Install zip command
+    cmds:
+      - go install ./cmd/zip
+
+  install-unzip:
+    desc: Install unzip command
+    cmds:
+      - go install ./cmd/unzip
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf bin/
+
+  test:
+    desc: Test the programs
+    deps: [build]
+    cmds:
+      - mkdir -p test/sample
+      - echo "test file 1" > test/sample/file1.txt
+      - echo "test file 2" > test/sample/file2.txt
+      - ./bin/zip test/sample.zip test/sample
+      - mkdir -p test/extracted
+      - cd test/extracted && ../../bin/unzip ../sample.zip
+      - echo "Test completed successfully"

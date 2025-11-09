@@ -1,0 +1,9 @@
+# Binaries
+bin/
+*.exe
+
+# Test files
+test/
+
+# Go specific
+vendor/
