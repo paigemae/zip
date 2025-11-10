@@ -1,58 +1,32 @@
 package main
 
 import (
-	"archive/zip"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
+
+	"github.com/paigemae/zip/pkg/unzipper"
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: unzip <file.zip>")
-		os.Exit(1)
-	}
-
-	zipFile := os.Args[1]
-
-	r, err := zip.OpenReader(zipFile)
+	zipFile, destination, err := getOptions()
 	if err != nil {
-		fmt.Printf("Error opening zip file: %v\n", err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
-	defer r.Close()
 
-	for _, f := range r.File {
-		if err := extractFile(f); err != nil {
-			fmt.Printf("Error extracting %s: %v\n", f.Name, err)
-			os.Exit(1)
-		}
+	if err := unzipper.Extract(zipFile, destination); err != nil {
+		fmt.Printf("Error extracting zip file: %v\n", err)
+		os.Exit(1)
 	}
 }
 
-func extractFile(f *zip.File) error {
-	rc, err := f.Open()
-	if err != nil {
-		return err
+func getOptions() (zipFile, destination string, err error) {
+	switch len(os.Args) {
+	case 2:
+		return os.Args[1], ".", nil
+	case 3:
+		return os.Args[1], os.Args[2], nil
+	default:
+		return "", "", fmt.Errorf("usage: unzip <file.zip> [destination]")
 	}
-	defer rc.Close()
-
-	path := f.Name
-	if f.FileInfo().IsDir() {
-		return os.MkdirAll(path, f.FileInfo().Mode())
-	}
-
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return err
-	}
-
-	outFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.FileInfo().Mode())
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
-
-	_, err = io.Copy(outFile, rc)
-	return err
 }
